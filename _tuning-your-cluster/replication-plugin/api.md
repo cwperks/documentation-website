@@ -392,3 +392,57 @@ Options | Description | Type | Required
    "acknowledged": true
 }
 ```
+
+## Start cluster metadata sync
+
+Start syncing composable index templates from the leader cluster to the follower cluster. Send this request to the follower cluster.
+
+#### Request
+
+```json
+POST /_plugins/_replication/_cluster_metadata_sync
+{
+   "leader_alias": "<connection-alias-name>"
+}
+```
+
+Specify the following options:
+
+Options | Description | Type | Required
+:--- | :--- |:--- |:--- |
+`leader_alias` | The name of the cross-cluster connection. You define this alias when you [set up a cross-cluster connection]({{site.url}}{{site.baseurl}}/replication-plugin/get-started/#set-up-a-cross-cluster-connection). | `string` | Yes
+
+#### Example response
+
+```json
+{
+   "acknowledged": true
+}
+```
+
+## Stop cluster metadata sync
+
+Stop syncing index templates from the leader cluster. Send this request to the follower cluster.
+
+#### Request
+
+```json
+DELETE /_plugins/_replication/_cluster_metadata_sync
+{
+   "leader_alias": "<connection-alias-name>"
+}
+```
+
+Specify the following options:
+
+Options | Description | Type | Required
+:--- | :--- |:--- |:--- |
+`leader_alias` | The name of the cross-cluster connection. | `string` | Yes
+
+#### Example response
+
+```json
+{
+   "acknowledged": true
+}
+```
