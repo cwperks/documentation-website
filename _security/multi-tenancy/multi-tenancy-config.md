@@ -150,6 +150,26 @@ The Security plugin scrubs these index names of special characters, so they migh
 
 To back up your OpenSearch Dashboards data, [take a snapshot]({{site.url}}{{site.baseurl}}/opensearch/snapshots/snapshot-restore/) of all tenant indexes using an index pattern such as `.kibana*`.
 
+## Tenant isolation and the `kibana_user` role
+
+The built-in `kibana_user` role grants index-level permissions (`read`, `index`, `delete`, `manage`) on the `.kibana_*` index pattern. This broad pattern matches **all** tenant indexes, not just the indexes belonging to the user who is assigned the role.
+
+Tenant access control is enforced by the Security plugin's privileges interceptor, which rewrites requests through the `.kibana` alias and checks the `securitytenant` header to determine whether a user has access to the requested tenant. The `tenant_permissions` section of a role definition controls which tenants a user can access and with what level of access (read or read/write).
+
+However, because the `kibana_user` role grants direct index-level access to `.kibana_*`, a user who knows the concrete index name of another tenant (for example, `.kibana_<hash>_<tenant_name>`) may be able to read from that index using operations that do not go through the tenant interceptor.
+{: .warning }
+
+### Recommendations
+
+If you require strict tenant isolation, consider the following:
+
+- **Use `tenant_permissions`** in your role definitions to control tenant access. The `tenant_permissions` section is the intended mechanism for granting tenant-level access.
+- **Avoid assigning `kibana_user` directly** when you need fine-grained tenant isolation. Instead, create custom roles that grant `.kibana_*` index access only to the specific tenant indexes the user needs, or rely solely on `tenant_permissions` with the standard Dashboards UI workflow (which always sends the `securitytenant` header).
+- **Restrict API access** for users who should only interact with tenants through the Dashboards UI. Users with direct API access (for example, via Dev Tools or curl) can construct requests that reference concrete tenant indexes.
+
+For related discussion on narrowing the scope of the `kibana_user` role, see [GitHub issue #5349](https://github.com/opensearch-project/security/issues/5349) and [GitHub issue #6206](https://github.com/opensearch-project/security/issues/6206).
+{: .note }
+
 ## `kibana_server` role details
 
 OpenSearch Dashboards uses the`kibana_server` role to perform necessary OpenSearch operations. By default, `kibanauser` is mapped to this role through the `role_mappings.yml` file. You can view the full list of permissions assigned to this role by sending a GET request to the `_plugins/_security/api/roles/kibana_server` API (include the admin certificate, key, and certificate authority file in the GET request).
